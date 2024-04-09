@@ -32,10 +32,9 @@ public class StudentController {
     }
 
     @DeleteMapping("{id}")
-    public Student deleteStudentInfo(@PathVariable Long id) {
+    public boolean deleteStudentInfo(@PathVariable Long id) {
         return studentService.deleteStudent(id);
     }
-
 
     @GetMapping("/age")
     public Collection<Student> findStudentsByAge(@RequestParam ("age") int age) {
