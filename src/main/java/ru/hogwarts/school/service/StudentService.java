@@ -41,7 +41,11 @@ public class StudentService {
                 .orElse(null);
     }
 
-    public Collection<Student> findStudentsByAge(int age) {
-        return studentRepository.findStudentByAge(age);
+    public Collection<Student> getByAgeBetween(int min, int max) {
+        return studentRepository.findAllByAgeBetween(min, max);
+    }
+
+    public  Collection<Student> getAll() {
+        return studentRepository.findAll();
     }
 }
