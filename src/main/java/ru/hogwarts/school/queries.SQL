@@ -6,3 +6,4 @@ select * from student where name like '%а%'
 select *from student where id <4
 select *from student where age < id
 select * from student order by age
+select * from avatar
