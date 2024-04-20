@@ -2,6 +2,7 @@ package ru.hogwarts.school.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,10 @@ import ru.hogwarts.school.service.AvatarService;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @RestController
 @RequestMapping("avatar")
@@ -22,32 +27,38 @@ public class AvatarController {
         this.avatarService = avatarService;
     }
 
-    @PostMapping()
-    public ResponseEntity<Avatar> save(@RequestParam Long studentId, @RequestBody MultipartFile file) throws IOException {
-        return ResponseEntity.ofNullable(avatarService.save(studentId, file));
+    @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> uploadAvatar(@PathVariable Long id, @RequestParam MultipartFile avatar) throws IOException {
+        avatarService.uploadAvatar(id, avatar);
+        return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/disk/{id}")
-    public void loadFromDisk(@PathVariable long id, HttpServletResponse response) throws IOException {
-        var avatar = avatarService.getById(id);
-        if(avatar!=null) {
-            response.setContentLength((int) avatar.getFileSize());
-            response.setContentType(avatar.getMediaType());
-            try (var fis = new FileInputStream(avatar.getFilePath())) {
-                fis.transferTo(response.getOutputStream());
-            }
-        }
-    }
+    @GetMapping(value = "/{id}/avatar/preview")
+    public ResponseEntity<byte[]> downloadAvatar(@PathVariable Long id) {
+        Avatar avatar = avatarService.findAvatar(id);
 
-    @GetMapping("/db/{id}")
-    public ResponseEntity<byte[]> loadFromDisk(@PathVariable Long id) {
-        var avatar = avatarService.getById(id);
-        if (avatar == null) {
-            return ResponseEntity.ofNullable(null);
-        }
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentLength(avatar.getFileSize());
         headers.setContentType(MediaType.parseMediaType(avatar.getMediaType()));
-        return ResponseEntity.status(200).headers(headers).body(avatar.getData());
+        headers.setContentLength(avatar.getData().length);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .headers(headers)
+                .body(avatar.getData());
+    }
+
+    @GetMapping(value = "/{id}/avatar")
+    public void downloadAvatar(@PathVariable Long id, HttpServletResponse response) throws IOException {
+        Avatar avatar = avatarService.findAvatar(id);
+
+        Path path = Path.of(avatar.getFilePath());
+
+        try (InputStream is = Files.newInputStream(path);
+             OutputStream os = response.getOutputStream()) {
+            response.setStatus(200);
+            response.setContentType(avatar.getMediaType());
+            response.setContentLength((int) avatar.getFileSize());
+            is.transferTo(os);
+        }
     }
 }

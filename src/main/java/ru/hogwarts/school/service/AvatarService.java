@@ -9,11 +9,15 @@ import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repositories.AvatarRepository;
 import ru.hogwarts.school.repositories.StudentRepository;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
+import static io.swagger.v3.core.util.AnnotationsUtils.getExtensions;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 
 @Service
@@ -21,39 +25,15 @@ public class AvatarService {
 
     private final AvatarRepository avatarRepository;
     private final StudentRepository studentRepository;
-    private final Path avatarsDir;
 
-    public AvatarService(AvatarRepository avatarRepository, StudentRepository studentRepository, @Value("${avatars.dir}") Path avatarsDir) {
+    @Value("${path.to.avatars.folder}")
+    private String avatarsDir;
+
+    public AvatarService(AvatarRepository avatarRepository, StudentRepository studentRepository) {
         this.avatarRepository = avatarRepository;
         this.studentRepository = studentRepository;
-        this.avatarsDir = avatarsDir;
     }
 
-    public Avatar save(Long studentId, MultipartFile avatarFile) throws IOException {
-        Files.createDirectories(avatarsDir);
-
-        var index = avatarFile.getOriginalFilename().lastIndexOf('.');
-        var extension = avatarFile.getOriginalFilename().substring(index);
-        Path filePath = avatarsDir.resolve(studentId + extension);
-        try (var in = avatarFile.getInputStream()){
-            Files.copy(in, filePath, StandardCopyOption.REPLACE_EXISTING);
-        }
-
-        Avatar avatar = avatarRepository.findAllByStudentId(studentId).orElse(new Avatar());
-        avatar.setFileSize(avatarFile.getSize());
-        avatar.setMediaType(avatarFile.getContentType());
-        avatar.setData(avatarFile.getBytes());
-        avatar.setStudent(studentRepository.getReferenceById(studentId));
-        avatar.setFilePath(filePath.toString());
-        return avatarRepository.save(avatar);
-
-    }
-
-    public Avatar getById(Long id) {
-        return avatarRepository.findById(id).orElse(null);
-    }
-
-/*
     public void uploadAvatar(Long studentId, MultipartFile avatarFile) throws IOException {
         Student student = studentRepository.getById(studentId);
         Path filePath = Path.of(avatarsDir, student + "." + getExtensions(avatarFile.getOriginalFilename()));
@@ -67,17 +47,38 @@ public class AvatarService {
         ) {
             bis.transferTo(bos);
         }
-        Avatar avatar = getById(studentId);
+        Avatar avatar = findAvatar(studentId);
         avatar.setStudent(student);
         avatar.setFilePath(filePath.toString());
         avatar.setFileSize(avatarFile.getSize());
         avatar.setMediaType(avatarFile.getContentType());
-        avatar.setData(avatarFile.getBytes());
+        avatar.setData(generateDataForDB(filePath));
         avatarRepository.save(avatar);
     }
+
+    private byte[] generateDataForDB(Path filePath) throws IOException {
+        try (
+                InputStream is = Files.newInputStream(filePath);
+                BufferedInputStream bis = new BufferedInputStream(is, 1024);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            BufferedImage image = ImageIO.read(bis);
+
+            int height = image.getHeight() / (image.getWidth() / 100);
+            BufferedImage preview = new BufferedImage(100, height, image.getType());
+            Graphics graphics2D = preview.createGraphics();
+            graphics2D.drawImage(image, 0, 0, 100, height, null);
+            graphics2D.dispose();
+
+            ImageIO.write(preview, getExtensions(filePath.getFileName().toString()), baos);
+            return baos.toByteArray();
+        }
+    }
+
+    public Avatar findAvatar(Long studentId) {
+        return avatarRepository.findAllByStudentId(studentId).orElse(new Avatar());
+    }
+
     private String getExtensions(String fileName) {
         return fileName.substring(fileName.lastIndexOf(".") + 1);
     }
-
- */
 }
