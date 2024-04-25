@@ -5,9 +5,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import ru.hogwarts.school.model.Faculty;
+import ru.hogwarts.school.model.Student;
+
+import java.lang.reflect.ParameterizedType;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -79,5 +84,29 @@ class FacultyControllerTestRestTemplate {
         var faculties = testRestTemplate.getForObject("/faculty/byColorAndName?name=test_name1&color=test_color2", Faculty[].class);
         assertThat(faculties.length).isEqualTo(2);
         assertThat(faculties).containsExactlyInAnyOrder(f1,f2);
+    }
+
+    @Test
+    void testGetFacultyStudents() {
+        var f = new Faculty(null, "test_name1", "test_color1");
+        var f1 = testRestTemplate.postForEntity("/faculty", f, Faculty.class).getBody();
+
+        Student newStudent = new Student(null, "s1", 10);
+        Student newStudent2 = new Student(null, "s2", 20);
+        newStudent.setFaculty(f1);
+        newStudent2.setFaculty(f1);
+
+        var s1 = testRestTemplate.postForEntity("/student", newStudent, Student.class).getBody();
+        var s2 = testRestTemplate.postForEntity("/student", newStudent2, Student.class).getBody();
+
+        ResponseEntity<List<Student>> result = testRestTemplate.exchange("/faculty/students?facultyId=" + f1.getId(),
+                HttpMethod.GET,
+        null,
+        new ParameterizedTypeReference<>() {
+        });
+assertThat(result.getBody()).containsExactlyInAnyOrder(
+        new Student(1L, "s1", 10),
+        new Student(2L, "s2", 20));
+
     }
 }

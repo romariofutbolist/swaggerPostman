@@ -15,7 +15,7 @@ public class Student {
     private int age;
     @JoinColumn(name = "faculty_id")
     @ManyToOne
-    @JsonIgnore
+
     private Faculty faculty;
 
     public Faculty getFaculty() {
