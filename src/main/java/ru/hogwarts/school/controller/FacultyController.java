@@ -45,10 +45,10 @@ public class FacultyController {
     public Collection<Faculty> findFacultiesByColor(@RequestParam(required = false)String color,
                                                     @RequestParam(required = false)String name) {
 
-        if (!StringUtils.isEmpty(color) && StringUtils.isEmpty(name)) {
-            return facultyService.findFacultiesByColorAndName(color,name);
+        if (color == null && name == null) {
+            return facultyService.getAll();
         }
-        return facultyService.getAll();
+        return facultyService.findFacultiesByColorAndName(color, name);
     }
 
     @GetMapping("students")
