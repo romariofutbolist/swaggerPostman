@@ -25,7 +25,6 @@ public class FacultyController {
         return facultyService.getFaculty(id);
     }
 
-
     @PostMapping
     public Faculty addFacultyInfo(@RequestBody Faculty faculty) {
         return facultyService.addFaculty(faculty);

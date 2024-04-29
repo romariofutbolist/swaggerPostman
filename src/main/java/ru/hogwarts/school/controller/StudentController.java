@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.List;
 
 @RestController
-@RequestMapping("student")
+@RequestMapping("/student")
 public class StudentController {
 
     private final StudentService studentService;
@@ -18,8 +18,8 @@ public class StudentController {
         this.studentService = studentService;
     }
 
-    @GetMapping("{id}")
-    public Student getStudentInfo(@PathVariable Long id) {
+    @GetMapping
+    public Student getStudentInfo(@RequestParam Long id) {
         return studentService.getStudent(id);
     }
 
@@ -33,18 +33,18 @@ public class StudentController {
         return studentService.editStudent(Student);
     }
 
-    @DeleteMapping("{id}")
-    public boolean deleteStudentInfo(@PathVariable Long id) {
+    @DeleteMapping()
+    public boolean deleteStudentInfo(@RequestParam Long id) {
         return studentService.deleteStudent(id);
     }
 
     @GetMapping("/byAge")
     public Collection<Student> findByAgeBetween(@RequestParam(required = false) Integer min,
                                                 @RequestParam(required = false) Integer max) {
-        if (min != null && max != null) {
-            return studentService.getByAgeBetween(min, max);
+        if (min == null && max == null) {
+            return studentService.getAll();
         }
-        return studentService.getAll();
+        return studentService.getByAgeBetween(min, max);
     }
 
     @GetMapping("faculty")

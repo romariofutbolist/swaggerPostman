@@ -48,11 +48,6 @@ class FacultyControllerTestWevMvc {
     @InjectMocks
     FacultyController facultyController;
 
-    @BeforeEach
-    void setUp() {
-
-    }
-
     @Test
     void testGet() throws Exception {
         when(facultyRepository.findById(1L)).thenReturn(Optional.of(new Faculty(1L, "test_faculty_mvc", "test_color_mvc")));

@@ -93,7 +93,7 @@ class FacultyControllerTestRestTemplate {
 
         Student newStudent = new Student(null, "s1", 10);
         Student newStudent2 = new Student(null, "s2", 20);
-        newStudent.setFaculty(f1);
+        newStudent.setFaculty(f);
         newStudent2.setFaculty(f1);
 
         var s1 = testRestTemplate.postForEntity("/student", newStudent, Student.class).getBody();

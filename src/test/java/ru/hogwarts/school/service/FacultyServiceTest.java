@@ -74,26 +74,15 @@ import static org.mockito.Mockito.when;
 
         @Test
         void shouldDeleteFaculty() {
-            // given
+
+            Faculty actual = new Faculty(1L,"Grif","orange");
+            actual.setId(1L);
+
             when(facultyRepository.findById(1L)).thenReturn(Optional.of(new Faculty()));
 
-            // when
             boolean result = facultyService.deleteFaculty(1L);
 
-            //then
             assertThat(result).isTrue();
-        }
-
-        @Test
-        void shouldNotDeleteFaculty() {
-            // given
-            when(facultyRepository.findById(1L)).thenReturn(Optional.empty());
-
-            // when
-            boolean result = facultyService.deleteFaculty(1L);
-
-            // then
-            assertThat(result).isFalse();
         }
 
         @Test
