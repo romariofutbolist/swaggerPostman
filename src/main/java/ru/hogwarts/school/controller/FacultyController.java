@@ -1,14 +1,17 @@
 package ru.hogwarts.school.controller;
 
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.service.FacultyService;
 
 import java.util.Collection;
+import java.util.List;
 
 @RestController
-@RequestMapping("faculty")
+@RequestMapping("/faculty")
 public class FacultyController {
 
     private final FacultyService facultyService;
@@ -17,28 +20,38 @@ public class FacultyController {
         this.facultyService = facultyService;
     }
 
-    @GetMapping("{id}")
-    public Faculty getFacultyInfo(@PathVariable Long id) {
+    @GetMapping
+    public Faculty get(@RequestParam long id) {
         return facultyService.getFaculty(id);
     }
 
     @PostMapping
-    public Faculty addFacultyInfo(Faculty faculty) {
+    public Faculty addFacultyInfo(@RequestBody Faculty faculty) {
         return facultyService.addFaculty(faculty);
     }
 
     @PutMapping
-    public Faculty updateFacultyInfo(Faculty faculty) {
+    public Faculty updateFacultyInfo(@RequestBody Faculty faculty) {
         return facultyService.editFaculty(faculty);
     }
 
-    @DeleteMapping("{id}")
-    public Faculty deleteFacultyInfo(@PathVariable Long id) {
+    @DeleteMapping
+    public boolean deleteFacultyInfo(@RequestParam Long id) {
         return facultyService.deleteFaculty(id);
     }
 
-    @GetMapping("{color}")
-    public Collection<Faculty> findFacultiesByColor(@PathVariable String color) {
-        return facultyService.findFacultiesByColor(color);
+    @GetMapping("/byColorAndName")
+    public Collection<Faculty> findFacultiesByColor(@RequestParam(required = false)String color,
+                                                    @RequestParam(required = false)String name) {
+
+        if (color == null && name == null) {
+            return facultyService.getAll();
+        }
+        return facultyService.findFacultiesByColorAndName(color, name);
+    }
+
+    @GetMapping("students")
+    public List<Student> getStudentFaculty(@RequestParam long facultyId) {
+        return facultyService.getFaculty(facultyId).getStudents();
     }
 }
