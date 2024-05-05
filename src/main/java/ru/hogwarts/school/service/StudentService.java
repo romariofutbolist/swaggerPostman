@@ -1,7 +1,9 @@
 package ru.hogwarts.school.service;
 
 import org.springframework.stereotype.Service;
+import ru.hogwarts.school.exceptions.RecordNotFoundException;
 import ru.hogwarts.school.model.Student;
+import ru.hogwarts.school.repositories.StudentRepository;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -9,40 +11,57 @@ import java.util.Map;
 
 @Service
 public class StudentService {
-    private Map<Long, Student> students = new HashMap<>();
-    private long COUNT = 0;
+
+    private final StudentRepository studentRepository;
+
+    public StudentService(StudentRepository studentRepository) {
+        this.studentRepository = studentRepository;
+    }
 
     public Student addStudent(Student student) {
-        if (student == null) {
-            throw new NullPointerException();
-        }
-        student.setId(++COUNT);
-        students.put(COUNT, student);
-        return student;
+        return studentRepository.save(student);
     }
 
     public Student getStudent(long id) {
-        return students.get(id);
+        return studentRepository.findById(id).orElseThrow(RecordNotFoundException::new);
     }
 
-    public Student deleteStudent(long id) {
-        if (!students.containsKey(id)) {
-            throw new IllegalArgumentException();
-        }
-        return students.remove(id);
+    public boolean deleteStudent(long id) {
+        return studentRepository.findById(id)
+                .map(entity -> {
+                    studentRepository.delete(entity);
+                    return true;
+                })
+                .orElse(false);
     }
 
     public Student editStudent(Student student) {
-        if (students.containsKey(student.getId())) {
-            students.put(student.getId(), student);
-            return student;
-        }
-        return null;
+        return studentRepository.findById(student.getId())
+                .map(entity -> studentRepository.save(student))
+                .orElse(null);
     }
 
-    public Collection<Student> findStudentsByAge(int age) {
-        return students.values().stream().
-                filter(student -> student.getAge()==age)
-                .toList();
+    public Collection<Student> getByAgeBetween(int min, int max) {
+        return studentRepository.findAllByAgeBetween(min, max);
+    }
+
+    public  Collection<Student> getAll() {
+        return studentRepository.findAll();
+    }
+
+    public Collection<Student> getByAgeStudents(int age) {
+        return studentRepository.findByAge(age);
+    }
+
+    public int getStudentCount() {
+        return studentRepository.countStudents();
+    }
+
+    public double getAvgAge() {
+        return studentRepository.avgAge();
+    }
+
+    public Collection<Student> getLastFive() {
+        return studentRepository.getLastFive();
     }
 }
