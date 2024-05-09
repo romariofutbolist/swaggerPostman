@@ -1,8 +1,10 @@
 package ru.hogwarts.school.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.hogwarts.school.exceptions.RecordNotFoundException;
 import ru.hogwarts.school.model.Faculty;
-import ru.hogwarts.school.model.Student;
+import ru.hogwarts.school.repositories.FacultyRepository;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,41 +13,41 @@ import java.util.Map;
 @Service
 public class FacultyService {
 
-    private Map<Long, Faculty> faculties = new HashMap<>();
-    private long COUNT = 0;
+    private final FacultyRepository facultyRepository;
+
+    public FacultyService(FacultyRepository facultyRepository) {
+        this.facultyRepository = facultyRepository;
+    }
 
     public Faculty addFaculty(Faculty faculty) {
-        if (faculty == null) {
-            throw new NullPointerException();
-        }
-        faculty.setId(++COUNT);
-        faculties.put(COUNT, faculty);
-        return faculty;
+        return facultyRepository.save(faculty);
     }
 
     public Faculty getFaculty(long id) {
-        return faculties.get(id);
+        return facultyRepository.findById(id).orElseThrow(RecordNotFoundException::new);
     }
 
-    public Faculty deleteFaculty(long id) {
-        if (!faculties.containsKey(id)) {
-            throw new IllegalArgumentException();
-        }
-        return faculties.remove(id);
+    public boolean deleteFaculty(long id) {
+        return facultyRepository.findById(id)
+                .map(entity -> {
+                    facultyRepository.delete(entity);
+                    return true;
+                })
+                .orElse(false);
     }
 
     public Faculty editFaculty(Faculty faculty) {
-        if (faculties.containsKey(faculty.getId())) {
-            faculties.put(faculty.getId(), faculty);
-            return faculty;
-        }
-        return null;
+        return facultyRepository.findById(faculty.getId())
+                .map(entity -> facultyRepository.save(faculty))
+                .orElse(null);
     }
 
-    public Collection<Faculty> findFacultiesByColor(String color) {
-        return faculties.values().stream().
-                filter(faculty -> faculty.getColor().equals(color))
-                .toList();
+    public Collection<Faculty> findFacultiesByColorAndName(String color, String name) {
+        return facultyRepository.findAllByColorIgnoreCaseOrNameIgnoreCase(color, name);
+    }
+
+    public Collection<Faculty> getAll() {
+        return facultyRepository.findAll();
     }
 }
 
