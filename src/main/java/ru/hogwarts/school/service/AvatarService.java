@@ -1,6 +1,8 @@
 package ru.hogwarts.school.service;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ import static java.nio.file.StandardOpenOption.CREATE_NEW;
 
 @Service
 public class AvatarService {
+    private final static Logger logger = LoggerFactory.getLogger(AvatarService.class);
 
     private final AvatarRepository avatarRepository;
     private final StudentRepository studentRepository;
@@ -37,6 +40,7 @@ public class AvatarService {
     }
 
     public void uploadAvatar(Long studentId, MultipartFile avatarFile) throws IOException {
+        logger.info("Upload avatar was invoked!");
         Student student = studentRepository.getById(studentId);
         Path filePath = Path.of(avatarsDir, student + "." + getExtensions(avatarFile.getOriginalFilename()));
         Files.createDirectories(filePath.getParent());
@@ -47,8 +51,10 @@ public class AvatarService {
                 BufferedInputStream bis = new BufferedInputStream(is, 1024);
                 BufferedOutputStream bos = new BufferedOutputStream(os, 1024);
         ) {
+            logger.info("Converting bytes...");
             bis.transferTo(bos);
         }
+        logger.info("File has been uploaded!");
         Avatar avatar = findAvatar(studentId);
         avatar.setStudent(student);
         avatar.setFilePath(filePath.toString());
@@ -56,6 +62,7 @@ public class AvatarService {
         avatar.setMediaType(avatarFile.getContentType());
         avatar.setData(generateDataForDB(filePath));
         avatarRepository.save(avatar);
+        logger.info("Avatar has been saved! id = {}, path = {}", avatar.getId(),filePath);
     }
 
     private byte[] generateDataForDB(Path filePath) throws IOException {
