@@ -9,6 +9,7 @@ import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.repositories.FacultyRepository;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -57,6 +58,13 @@ public class FacultyService {
     public Collection<Faculty> getAll() {
         logger.info("All faculties have been received");
         return facultyRepository.findAll();
+    }
+
+    public String getLongestName() {
+        return facultyRepository.findAll().stream()
+                .map(Faculty::getName)
+                .max(Comparator.comparing(String::length))
+                .orElse("");
     }
 }
 
